@@ -1,5 +1,5 @@
 import unittest
-from AgeValidation import is_valid_age
+from tests.AgeValidation import is_valid_age
 
 class TestAgeValidation(unittest.TestCase):
     """Test cases for the is_valid_age function."""
