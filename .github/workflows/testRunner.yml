@@ -1,9 +1,7 @@
-# Name for your workflow, shown in the GitHub Actions tab
 name: Python Test Suite
 
 # 1. Triggers
-# This workflow runs on push or pull request events
-# but only for the "main" branch.
+# Run this on push or PR for the main branch.
 on:
   push:
     branches: [ main ]
@@ -11,32 +9,28 @@ on:
     branches: [ main ]
 
 # 2. Jobs
-# A workflow is made up of one or more jobs
+# Define the jobs
 jobs:
-  # We'll call our single job "test"
+  # My main test job
   test:
     # 3. Runner
-    # This job will run on a clean virtual machine
-    # using the latest version of Ubuntu.
+    # Use the latest ubuntu runner
     runs-on: ubuntu-latest
 
     # 4. Steps
-    # These are the tasks the job will perform in order.
+    # All the steps to run in order
     steps:
-      # Step 1: Checks out your repository's code
-      # so the runner can access it.
+      # Step 1: First, check out the code
       - name: Check out repository code
         uses: actions/checkout@v4
 
-      # Step 2: Sets up the Python environment.
+      # Step 2: Set up the python version I want
       - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-          # We've removed 'cache: pip' because it requires a requirements.txt
-          # file to be present in the repository.
 
-      # Step 3: Installs your project's dependencies.
+      # Step 3: Install any dependencies
       # This step now checks if requirements.txt exists first.
       - name: Install dependencies
         run: |
@@ -47,7 +41,7 @@ jobs:
             echo "requirements.txt not found, skipping."
           fi
       
-      # Step 4: Runs your test suite.
-      # This is the command you provided.
+      # Step 4: Finally, run my test suite
       - name: Run test suite
         run: python tests/testSuiteRunner.py
+
