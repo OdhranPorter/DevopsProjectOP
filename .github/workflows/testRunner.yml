@@ -1,3 +1,4 @@
+# Name for your workflow, shown in the GitHub Actions tab
 name: Python Test Suite
 
 # 1. Triggers
@@ -32,15 +33,19 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-          # This caches your 'pip' packages to speed up future runs.
-          cache: 'pip'
+          # We've removed 'cache: pip' because it requires a requirements.txt
+          # file to be present in the repository.
 
       # Step 3: Installs your project's dependencies.
-      # This is a critical step.
+      # This step now checks if requirements.txt exists first.
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            echo "requirements.txt not found, skipping."
+          fi
       
       # Step 4: Runs your test suite.
       # This is the command you provided.
