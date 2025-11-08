@@ -22,7 +22,7 @@ jobs:
     steps:
       # Step 1: First, check out the code
       - name: Check out repository code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # Step 2: Set up the python version I want
       - name: Set up Python 3.10
