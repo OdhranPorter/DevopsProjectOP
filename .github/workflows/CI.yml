@@ -44,32 +44,29 @@ jobs:
       # Step 5: Generate documentation
       - name: Generate documentation
         run: |
+          # This automatically creates the docs directory
           mkdir -p docs
           echo "Generating documentation..."
           
-          # Generate HTML docs for Python files
-          find . -name "*.py" -not -path "./.*" | while read file; do
-            module_name=$(echo "$file" | sed 's|^./||' | sed 's|/|.|g' | sed 's|.py$||')
-            python -m pydoc -w "$module_name" 2>/dev/null || true
-          done
+          # Generate HTML docs - this creates .html files in current directory
+          python -m pydoc -w tests.AgeValidation tests.potionLogic tests.testSuiteRunner 2>/dev/null || true
           
-          # Move HTML files to docs folder
-          mv *.html docs/ 2>/dev/null || echo "No docs generated"
+          # Move any generated HTML files to docs folder
+          mv *.html docs/ 2>/dev/null || echo "No HTML files to move"
           
-          # Create simple index
-          echo "<h1>Documentation</h1>" > docs/index.html
-          for file in docs/*.html; do
-            if [ "$file" != "docs/index.html" ]; then
-              name=$(basename "$file")
-              echo "<a href='$name'>$name</a><br>" >> docs/index.html
-            fi
-          done
+          # Always create an index file to ensure docs isn't empty
+          echo "<h1>Project Documentation</h1>" > docs/index.html
+          echo "<p>Available documentation files:</p>" >> docs/index.html
+          ls docs/*.html 2>/dev/null | while read file; do
+            name=$(basename "$file")
+            echo "<a href='$name'>$name</a><br>" >> docs/index.html
+          done || echo "<p>No documentation files generated yet</p>" >> docs/index.html
       
       # Step 6: Run your test suite
       - name: Run test suite
         run: python tests/testSuiteRunner.py
 
-  # Simple deploy job with updated actions
+  # Deploy job
   deploy:
     if: github.ref == 'refs/heads/main'
     needs: test
@@ -77,25 +74,44 @@ jobs:
     permissions:
       pages: write
       id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         
-      # Step 1: Configure Pages (latest version)
-      - name: Configure Pages
-        uses: actions/configure-pages@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
         
-      # Step 2: Upload artifact (latest version)
-      - name: Upload artifact
+      - name: Generate docs for deployment
+        run: |
+          # This automatically creates the public directory
+          mkdir -p public
+          
+          # Generate specific module docs
+          python -m pydoc -w tests.AgeValidation tests.potionLogic tests.testSuiteRunner 2>/dev/null || true
+          
+          # Move HTML files to public (required for GitHub Pages)
+          mv *.html public/ 2>/dev/null || echo "No HTML files generated"
+          
+          # Always create index.html to ensure public isn't empty
+          echo "<h1>Project Documentation</h1>" > public/index.html
+          echo "<p>Documentation generated from Python docstrings</p>" >> public/index.html
+          echo "<p>Available files:</p>" >> public/index.html
+          
+          # List any generated files
+          for file in public/*.html 2>/dev/null; do
+            name=$(basename "$file")
+            if [ "$name" != "index.html" ]; then
+              echo "<a href='$name'>$name</a><br>" >> public/index.html
+            fi
+          done
+        
+      - name: Upload to Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './docs'
+          path: './public'
           
-      # Step 3: Deploy to Pages (latest version)
-      - name: Deploy to Pages
-        id: deployment
+      - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
