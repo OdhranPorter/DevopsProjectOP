@@ -81,6 +81,7 @@ jobs:
       # pydoc is a built-in Python module, so no installation is needed.
       - name: Generate documentation
         run: |
+          export PYTHONPATH=./tests:$PYTHONPATH
           # Create the output directory
           mkdir -p ./docs
           
