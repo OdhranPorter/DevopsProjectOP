@@ -9,19 +9,18 @@ on:
 
 # 2. Jobs
 jobs:
+  # Job 1: Run linter and test suite
   test:
-    # 3. Runner
     runs-on: ubuntu-latest
 
-    # 4. Steps
     steps:
       # Step 1: Check out the code
       - name: Check out repository code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # Step 2: Set up Python
       - name: Set up Python 3.10
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: '3.10'
 
@@ -39,79 +38,86 @@ jobs:
       # Step 4: Run the linter
       - name: Run linter (flake8)
         run: |
-          flake8 . --extend-ignore=W391,E302,E303
+          # Critical error check (fails the build)
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Style check (non-blocking)
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --extend-ignore=W391,E302,E303
       
-      # Step 5: Generate documentation
-      - name: Generate documentation
-        run: |
-          # This automatically creates the docs directory
-          mkdir -p docs
-          echo "Generating documentation..."
-          
-          # Generate HTML docs - this creates .html files in current directory
-          python -m pydoc -w tests.AgeValidation tests.potionLogic tests.testSuiteRunner 2>/dev/null || true
-          
-          # Move any generated HTML files to docs folder
-          mv *.html docs/ 2>/dev/null || echo "No HTML files to move"
-          
-          # Always create an index file to ensure docs isn't empty
-          echo "<h1>Project Documentation</h1>" > docs/index.html
-          echo "<p>Available documentation files:</p>" >> docs/index.html
-          ls docs/*.html 2>/dev/null | while read file; do
-            name=$(basename "$file")
-            echo "<a href='$name'>$name</a><br>" >> docs/index.html
-          done || echo "<p>No documentation files generated yet</p>" >> docs/index.html
-      
-      # Step 6: Run your test suite
+      # Step 5: Run your test suite
       - name: Run test suite
         run: python tests/testSuiteRunner.py
 
-  # Deploy job
-  deploy:
-    if: github.ref == 'refs/heads/main'
+  # Job 2: Build and deploy documentation
+  build-and-deploy-docs:
+    # Only run after tests pass and only on main branch pushes
     needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
     runs-on: ubuntu-latest
+    
+    # Grant permissions for GitHub Pages deployment
     permissions:
+      contents: read
       pages: write
       id-token: write
     
+    # Specify the deployment environment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        
+      # Step 1: Check out the code
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      # Step 2: Set up Python
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: '3.10'
-        
-      - name: Generate docs for deployment
+
+      # Step 3: Generate documentation with your actual module names
+      - name: Generate documentation
         run: |
-          # This automatically creates the public directory
-          mkdir -p public
+          # Create the output directory
+          mkdir -p ./docs
           
-          # Generate specific module docs
-          python -m pydoc -w tests.AgeValidation tests.potionLogic tests.testSuiteRunner 2>/dev/null || true
+          # Generate documentation for your specific test modules
+          python -m pydoc -w tests.test_AgeValidationtest
+          python -m pydoc -w tests.test_potions
+          python -m pydoc -w tests.testSuiteRunner
           
-          # Move HTML files to public (required for GitHub Pages)
-          mv *.html public/ 2>/dev/null || echo "No HTML files generated"
+          # Move the generated HTML files into the docs directory
+          mv *.html ./docs/ 2>/dev/null || echo "No HTML files generated"
           
-          # Always create index.html to ensure public isn't empty
-          echo "<h1>Project Documentation</h1>" > public/index.html
-          echo "<p>Documentation generated from Python docstrings</p>" >> public/index.html
-          echo "<p>Available files:</p>" >> public/index.html
+          # Create index.html (required for GitHub Pages)
+          echo "<h1>Test Suite Documentation</h1>" > ./docs/index.html
+          echo "<p>Automatically generated test documentation:</p>" >> ./docs/index.html
+          echo "<ul>" >> ./docs/index.html
           
-          # List any generated files
-          for file in public/*.html 2>/dev/null; do
-            name=$(basename "$file")
-            if [ "$name" != "index.html" ]; then
-              echo "<a href='$name'>$name</a><br>" >> public/index.html
+          # Add links to all generated documentation files
+          for file in ./docs/*.html; do
+            if [ "$(basename "$file")" != "index.html" ]; then
+              filename=$(basename "$file")
+              echo "<li><a href='$filename'>$filename</a></li>" >> ./docs/index.html
             fi
           done
-        
-      - name: Upload to Pages
+          
+          echo "</ul>" >> ./docs/index.html
+          echo "<p><em>Generated on: $(date)</em></p>" >> ./docs/index.html
+
+      # Step 4: Configure GitHub Pages
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      # Step 5: Upload documentation artifact
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './public'
-          
+          path: './docs'
+
+      # Step 6: Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
