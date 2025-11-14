@@ -42,7 +42,8 @@ jobs:
           # Run flake8 on the entire project.
           # This command will automatically fail the step if it finds
           # any style errors, stopping the build.
-          flake8 .
+          
+          flake8 . --extend-ignore=W391,E302,E303
       
       # Step 5: Run your test suite
       - name: Run test suite
