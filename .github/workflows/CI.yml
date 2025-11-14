@@ -77,54 +77,36 @@ jobs:
         with:
           python-version: '3.10'
 
-      # Step 3: Generate documentation for your actual modules
+   # Step 3: Generate documentation with pydoc
+      # pydoc is a built-in Python module, so no installation is needed.
       - name: Generate documentation
         run: |
           # Create the output directory
           mkdir -p ./docs
           
-          echo "=== Generating documentation for main modules ==="
-          
-          # Generate documentation for your actual modules
-          python -m pydoc -w AgeValidation
+          # Generate documentation for each module.
+          # pydoc -w <module_name> writes <module_name>.html to the current directory
           python -m pydoc -w potionLogic
+          python -m pydoc -w AgeValidation
           
           # Move the generated HTML files into the docs directory
-          mv *.html ./docs/ 2>/dev/null || echo "No HTML files generated"
-          
-          # Create index.html (required for GitHub Pages)
-          echo "<h1>Project Documentation</h1>" > ./docs/index.html
-          echo "<p>Automatically generated API documentation:</p>" >> ./docs/index.html
-          echo "<ul>" >> ./docs/index.html
-          
-          # Add links to all generated documentation files
-          for file in ./docs/*.html; do
-            if [ "$(basename "$file")" != "index.html" ]; then
-              filename=$(basename "$file")
-              # Clean up the display names
-              display_name=$(echo "$filename" | sed 's/.html//' | sed 's/^\(.\)/\U\1/')
-              echo "<li><a href='$filename'>$display_name</a></li>" >> ./docs/index.html
-            fi
-          done
-          
-          echo "</ul>" >> ./docs/index.html
-          echo "<p><em>Generated on: $(date)</em></p>" >> ./docs/index.html
-          
-          # Show what was generated
-          echo "=== Generated files ==="
-          ls -la ./docs/
+          # We also create a simple index.html to link to the module pages,
+          # as GitHub Pages needs an index file.
+          mv choice_processor.html combat.html ./docs/
+          echo "<h1>Project Documentation</h1><ul><li><a href='choice_processor.html'>choice_processor</a></li><li><a href='combat.html'>combat</a></li></ul>" > ./docs/index.html
 
-      # Step 4: Configure GitHub Pages
+      # Step 5: Configure GitHub Pages
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      # Step 5: Upload documentation artifact
+      # Step 6: Upload documentation artifact
+      # This packages the ./docs directory for deployment
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: './docs'
 
-      # Step 6: Deploy to GitHub Pages
+      # Step 7: Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
