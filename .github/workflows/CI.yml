@@ -1,7 +1,6 @@
 name: Python Test Suite
 
 # 1. Triggers
-# Run this on push or PR for the main branch.
 on:
   push:
     branches: [ main ]
@@ -9,39 +8,44 @@ on:
     branches: [ main ]
 
 # 2. Jobs
-# Define the jobs
 jobs:
-  # My main test job
   test:
     # 3. Runner
-    # Use the latest ubuntu runner
     runs-on: ubuntu-latest
 
     # 4. Steps
-    # All the steps to run in order
     steps:
-      # Step 1: First, check out the code
+      # Step 1: Check out the code
       - name: Check out repository code
         uses: actions/checkout@v5
 
-      # Step 2: Set up the python version I want
+      # Step 2: Set up Python
       - name: Set up Python 3.10
         uses: actions/setup-python@v6
         with:
           python-version: '3.10'
 
-      # Step 3: Install any dependencies
-      # This step now checks if requirements.txt exists first.
+      # Step 3: Install dependencies (AND LINTER)
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install flake8  # <-- INSTALL THE LINTER HERE
           if [ -f requirements.txt ]; then
             pip install -r requirements.txt
           else
             echo "requirements.txt not found, skipping."
           fi
       
-      # Step 4: Finally, run my test suite
+      # Step 4: NEW - Run the linter
+      - name: Run linter (flake8)
+        run: |
+          # Run flake8 on the entire project.
+          # This command will automatically fail the step if it finds
+          # any style errors, stopping the build.
+          
+          flake8 . --extend-ignore=W391,E302,E303
+      
+      # Step 5: Run your test suite
       - name: Run test suite
         run: python tests/testSuiteRunner.py
 
