@@ -25,11 +25,11 @@ jobs:
         with:
           python-version: '3.10'
 
-      # Step 3: Install dependencies (AND LINTER)
+      # Step 3: Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8  # <-- INSTALL THE LINTER HERE
+          pip install flake8
           if [ -f requirements.txt ]; then
             pip install -r requirements.txt
           else
@@ -41,44 +41,57 @@ jobs:
         run: |
           flake8 . --extend-ignore=W391,E302,E303
       
-      # NEW STEP: Run pydoc documentation checks
-      - name: Check documentation with pydocstyle
-        run: |
-          # Check for docstring style compliance (PEP 257)
-          # Ignoring D100 (missing module docstring) and D104 (missing package docstring)
-          # to make it less strict for test files
-          pydocstyle . --convention=pep257 --add-ignore=D100,D104 || echo "Pydocstyle check completed with some warnings"
-      
-      # NEW STEP: Generate documentation
+      # Step 5: Generate documentation
       - name: Generate documentation
         run: |
-          # Create docs directory
           mkdir -p docs
-          echo "Generating documentation for Python files..."
+          echo "Generating documentation..."
           
-          # Generate HTML documentation for all Python files
-          find . -name "*.py" -not -path "./.*" -not -path "./docs/*" | while read file; do
+          # Generate HTML docs for Python files
+          find . -name "*.py" -not -path "./.*" | while read file; do
             module_name=$(echo "$file" | sed 's|^./||' | sed 's|/|.|g' | sed 's|.py$||')
-            echo "Generating docs for: $module_name"
             python -m pydoc -w "$module_name" 2>/dev/null || true
           done
           
-          # Move any generated HTML files to docs directory
-          mv *.html docs/ 2>/dev/null || echo "No HTML documentation files generated"
+          # Move HTML files to docs folder
+          mv *.html docs/ 2>/dev/null || echo "No docs generated"
           
-          # List what was generated
-          echo "Generated documentation files:"
-          ls -la docs/ || echo "No documentation files found"
-
-      # NEW STEP: Upload documentation as artifact
-      - name: Upload documentation artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: python-documentation
-          path: docs/
-          retention-days: 7
+          # Create simple index
+          echo "<h1>Documentation</h1>" > docs/index.html
+          for file in docs/*.html; do
+            if [ "$file" != "docs/index.html" ]; then
+              name=$(basename "$file")
+              echo "<a href='$name'>$name</a><br>" >> docs/index.html
+            fi
+          done
       
-      # Step 5: Run your test suite
+      # Step 6: Run your test suite
       - name: Run test suite
         run: python tests/testSuiteRunner.py
 
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      # Step 1: Configure Pages
+      - name: Configure Pages
+        uses: actions/configure-pages@v3
+        
+      # Step 2: Upload artifact
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: './docs'
+          
+      # Step 3: Deploy to Pages
+      - name: Deploy to Pages
+        uses: actions/deploy-pages@v2
