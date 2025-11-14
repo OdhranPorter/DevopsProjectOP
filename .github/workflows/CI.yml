@@ -17,11 +17,11 @@ jobs:
     steps:
       # Step 1: Check out the code
       - name: Check out repository code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       # Step 2: Set up Python
       - name: Set up Python 3.10
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v4
         with:
           python-version: '3.10'
 
@@ -69,7 +69,7 @@ jobs:
       - name: Run test suite
         run: python tests/testSuiteRunner.py
 
-
+  # Simple deploy job with updated actions
   deploy:
     if: github.ref == 'refs/heads/main'
     needs: test
@@ -77,21 +77,25 @@ jobs:
     permissions:
       pages: write
       id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         
-      # Step 1: Configure Pages
+      # Step 1: Configure Pages (latest version)
       - name: Configure Pages
-        uses: actions/configure-pages@v3
+        uses: actions/configure-pages@v4
         
-      # Step 2: Upload artifact
+      # Step 2: Upload artifact (latest version)
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
           path: './docs'
           
-      # Step 3: Deploy to Pages
+      # Step 3: Deploy to Pages (latest version)
       - name: Deploy to Pages
-        uses: actions/deploy-pages@v2
+        id: deployment
+        uses: actions/deploy-pages@v4
