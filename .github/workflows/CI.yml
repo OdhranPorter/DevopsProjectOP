@@ -36,7 +36,7 @@ jobs:
             echo "requirements.txt not found, skipping."
           fi
       
-        # Step 4: Run the linter
+      # Step 4: Run the linter
       - name: Run linter (flake8)
         run: |
           flake8 . --extend-ignore=W391,E302,E303
@@ -69,6 +69,14 @@ jobs:
           # List what was generated
           echo "Generated documentation files:"
           ls -la docs/ || echo "No documentation files found"
+
+      # NEW STEP: Upload documentation as artifact
+      - name: Upload documentation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-documentation
+          path: docs/
+          retention-days: 7
       
       # Step 5: Run your test suite
       - name: Run test suite
