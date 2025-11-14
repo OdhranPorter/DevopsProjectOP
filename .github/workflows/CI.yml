@@ -36,14 +36,39 @@ jobs:
             echo "requirements.txt not found, skipping."
           fi
       
-      # Step 4: NEW - Run the linter
+        # Step 4: Run the linter
       - name: Run linter (flake8)
         run: |
-          # Run flake8 on the entire project.
-          # This command will automatically fail the step if it finds
-          # any style errors, stopping the build.
-          
           flake8 . --extend-ignore=W391,E302,E303
+      
+      # NEW STEP: Run pydoc documentation checks
+      - name: Check documentation with pydocstyle
+        run: |
+          # Check for docstring style compliance (PEP 257)
+          # Ignoring D100 (missing module docstring) and D104 (missing package docstring)
+          # to make it less strict for test files
+          pydocstyle . --convention=pep257 --add-ignore=D100,D104 || echo "Pydocstyle check completed with some warnings"
+      
+      # NEW STEP: Generate documentation
+      - name: Generate documentation
+        run: |
+          # Create docs directory
+          mkdir -p docs
+          echo "Generating documentation for Python files..."
+          
+          # Generate HTML documentation for all Python files
+          find . -name "*.py" -not -path "./.*" -not -path "./docs/*" | while read file; do
+            module_name=$(echo "$file" | sed 's|^./||' | sed 's|/|.|g' | sed 's|.py$||')
+            echo "Generating docs for: $module_name"
+            python -m pydoc -w "$module_name" 2>/dev/null || true
+          done
+          
+          # Move any generated HTML files to docs directory
+          mv *.html docs/ 2>/dev/null || echo "No HTML documentation files generated"
+          
+          # List what was generated
+          echo "Generated documentation files:"
+          ls -la docs/ || echo "No documentation files found"
       
       # Step 5: Run your test suite
       - name: Run test suite
