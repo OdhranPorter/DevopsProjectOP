@@ -77,35 +77,42 @@ jobs:
         with:
           python-version: '3.10'
 
-      # Step 3: Generate documentation with your actual module names
+      # Step 3: Generate documentation for your actual modules
       - name: Generate documentation
         run: |
           # Create the output directory
           mkdir -p ./docs
           
-          # Generate documentation for your specific test modules
-          python -m pydoc -w tests.test_AgeValidationtest
-          python -m pydoc -w tests.test_potions
-          python -m pydoc -w tests.testSuiteRunner
+          echo "=== Generating documentation for main modules ==="
+          
+          # Generate documentation for your actual modules
+          python -m pydoc -w AgeValidation
+          python -m pydoc -w potionLogic
           
           # Move the generated HTML files into the docs directory
           mv *.html ./docs/ 2>/dev/null || echo "No HTML files generated"
           
           # Create index.html (required for GitHub Pages)
-          echo "<h1>Test Suite Documentation</h1>" > ./docs/index.html
-          echo "<p>Automatically generated test documentation:</p>" >> ./docs/index.html
+          echo "<h1>Project Documentation</h1>" > ./docs/index.html
+          echo "<p>Automatically generated API documentation:</p>" >> ./docs/index.html
           echo "<ul>" >> ./docs/index.html
           
           # Add links to all generated documentation files
           for file in ./docs/*.html; do
             if [ "$(basename "$file")" != "index.html" ]; then
               filename=$(basename "$file")
-              echo "<li><a href='$filename'>$filename</a></li>" >> ./docs/index.html
+              # Clean up the display names
+              display_name=$(echo "$filename" | sed 's/.html//' | sed 's/^\(.\)/\U\1/')
+              echo "<li><a href='$filename'>$display_name</a></li>" >> ./docs/index.html
             fi
           done
           
           echo "</ul>" >> ./docs/index.html
           echo "<p><em>Generated on: $(date)</em></p>" >> ./docs/index.html
+          
+          # Show what was generated
+          echo "=== Generated files ==="
+          ls -la ./docs/
 
       # Step 4: Configure GitHub Pages
       - name: Setup Pages
