@@ -1,27 +1,16 @@
-# validators.py
-# This file contains a function to validate a user's age input.
+import logging
 
-def is_valid_age(age_input):
-    """
-    Validates an age input based on specific rules.
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG) 
 
-    Rules:
-    - Must be an integer (not a letter, float, or other type).
-    - Must not be negative.
-    - Must not be greater than 150.
+def is_adult(age):
+    if not isinstance(age, int) or age < 0:
+        logger.error(f"Invalid age input provided: {age}. Must be a non-negative integer.")
+        raise ValueError("Age must be a non-negative integer.")
 
-    Returns True if the age is valid, False otherwise.
-    """
-    # Rule 1: Check if the input is an integer.
-    # This immediately rejects letters, strings, floats, etc.
-    if not isinstance(age_input, int):
-        return False
-
-    # Rule 2: Check if the age is within the valid range (0-150).
-    # This also handles the negative age case.
-    if 0 <= age_input <= 150:
+    if age >= 18:
+        logger.info(f"Age {age} successfully validated as an adult.")
         return True
     else:
-        # This will catch negative numbers and ages over 150.
+        logger.warning(f"Age {age} is below the adult threshold of 18.")
         return False
-
