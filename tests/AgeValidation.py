@@ -1,16 +1,29 @@
 import logging
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG) 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[logging.FileHandler("app.log"), logging.StreamHandler()]
+)
 
-def is_adult(age):
-    if not isinstance(age, int) or age < 0:
-        logger.error(f"Invalid age input provided: {age}. Must be a non-negative integer.")
-        raise ValueError("Age must be a non-negative integer.")
-
-    if age >= 18:
-        logger.info(f"Age {age} successfully validated as an adult.")
-        return True
-    else:
-        logger.warning(f"Age {age} is below the adult threshold of 18.")
+def is_valid_age(age):
+    logging.info(f"Validating age input: {age}")
+    
+    # Check if input is an integer
+    if not isinstance(age, int):
+        logging.warning(f"Invalid input type: {type(age)}. Expected int.")
         return False
+    
+    # Check for negative age
+    if age < 0:
+        logging.warning(f"Invalid age: {age}. Age cannot be negative.")
+        return False
+        
+    # Check for age > 150
+    if age > 150:
+        logging.warning(f"Invalid age: {age}. Age cannot be greater than 150.")
+        return False
+
+    logging.info(f"Age {age} is valid.")
+    return True
