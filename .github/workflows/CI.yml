@@ -89,7 +89,7 @@ jobs:
         with:
           python-version: '3.10'
 
-      # Step 3: Generate documentation with pydoc
+# Step 3: Generate documentation with pydoc
       # pydoc is a built-in Python module, so no installation is needed.
       - name: Generate documentation
         run: |
@@ -101,12 +101,16 @@ jobs:
           # pydoc -w <module_name> writes <module_name>.html to the current directory
           python -m pydoc -w potionLogic
           python -m pydoc -w AgeValidation
+          # Generate docs for unit tests
+          python -m pydoc -w test_potions
+          python -m pydoc -w test_AgeValidationtest
           
           # Move the generated HTML files into the docs directory
-          # We also create a simple index.html to link to the module pages,
-          # as GitHub Pages needs an index file.
-          mv AgeValidation.html potionLogic.html ./docs/
-          echo "<h1>Project Documentation</h1><ul><li><a href='AgeValidation.html'>AgeValidation.html</a></li><li><a href='potionLogic.html'>potionLogic</a></li></ul>" > ./docs/index.html
+          # ADDED: Include the test HTML files in the move command
+          mv AgeValidation.html potionLogic.html test_potions.html test_AgeValidationtest.html ./docs/
+          
+          # Update index.html to include links to the test documentation
+          echo "<h1>Project Documentation</h1><ul><li><a href='AgeValidation.html'>AgeValidation</a></li><li><a href='potionLogic.html'>potionLogic</a></li><li><a href='test_potions.html'>test_potions</a></li><li><a href='test_AgeValidationtest.html'>test_AgeValidationtest</a></li></ul>" > ./docs/index.html
 
       # Step 5: Configure GitHub Pages
       - name: Setup Pages
